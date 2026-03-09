@@ -67,3 +67,48 @@ WHERE user_id IS NULL;
 -- Step 4: user_id NOT NULL 제약 추가
 ALTER TABLE public.tasks ALTER COLUMN user_id SET NOT NULL;
 
+-- ============================================================
+-- 마이그레이션 v0.5: 반복 일정 + 시간표 기능
+-- ============================================================
+
+-- tasks 테이블에 반복 관련 컬럼 추가
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS is_repeat      BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS repeat_days    INT     NOT NULL DEFAULT 0;
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS repeat_hours   INT     NOT NULL DEFAULT 0;
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS repeat_minutes INT     NOT NULL DEFAULT 0;
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS repeat_seconds INT     NOT NULL DEFAULT 0;
+
+-- timetable_entries 테이블 생성
+CREATE TABLE IF NOT EXISTS public.timetable_entries (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID        NOT NULL REFERENCES public.users(id),
+  title        TEXT        NOT NULL,
+  day_of_week  INT         NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), -- 0=일, 1=월...6=토
+  start_time   TIME        NOT NULL,
+  end_time     TIME        NOT NULL,
+  color        TEXT        NOT NULL DEFAULT '#a5b4fc',
+  task_id      UUID        REFERENCES public.tasks(id) ON DELETE CASCADE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.timetable_entries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow_all_timetable"
+  ON public.timetable_entries FOR ALL USING (true) WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_timetable_user    ON public.timetable_entries (user_id);
+CREATE INDEX IF NOT EXISTS idx_timetable_dow     ON public.timetable_entries (day_of_week);
+CREATE INDEX IF NOT EXISTS idx_timetable_task_id ON public.timetable_entries (task_id);
+
+-- ============================================================
+-- 마이그레이션 v0.6: 요일별 공유 노트
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.day_notes (
+  day_of_week  INT         NOT NULL PRIMARY KEY CHECK (day_of_week BETWEEN 0 AND 6),
+  content      TEXT        NOT NULL DEFAULT '',
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.day_notes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow_all_day_notes"
+  ON public.day_notes FOR ALL USING (true) WITH CHECK (true);
+

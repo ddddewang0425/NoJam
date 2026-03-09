@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Trash2, Check, Archive } from 'lucide-react'
+import { Trash2, Check, Archive, RefreshCw, ChevronRight, ChevronLeft } from 'lucide-react'
 import useTaskStore from '../../store/taskStore'
 
 // Display "HH:MM" from "HH:MM:SS", or "24:00" when no time is set
@@ -79,17 +79,47 @@ export default function TaskItem({ task, now, granularity, index = 0, animMs = 3
   const deleteTask   = useTaskStore((s) => s.deleteTask)
   const setPriority  = useTaskStore((s) => s.setPriority)
   const priorityStep = useTaskStore((s) => s.priorityStep)
+  const advanceTask  = useTaskStore((s) => s.advanceTask)
+  const retreatTask  = useTaskStore((s) => s.retreatTask)
 
-  const [showPriority, setShowPriority] = useState(false)
+  const [showPopover, setShowPopover] = useState(false)
   const [popoverPos, setPopoverPos] = useState({ x: 0, y: 0 })
   const popoverRef = useRef(null)
 
-  // Close priority popover on outside click / touch
+  // Long-press detection
+  const longPressTimer = useRef(null)
+  const didLongPress   = useRef(false)
+
+  const startLongPress = useCallback((e) => {
+    didLongPress.current = false
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX ?? 0
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY ?? 0
+    longPressTimer.current = setTimeout(() => {
+      didLongPress.current = true
+      const POP_W = 208
+      const POP_H = 260
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const left = clientX + POP_W > vw ? clientX - POP_W : clientX
+      const top  = clientY + POP_H > vh ? clientY - POP_H : clientY + 8
+      setPopoverPos({ x: left, y: top })
+      setShowPopover(true)
+    }, 500)
+  }, [])
+
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }, [])
+
+  // Close popover on outside click / touch
   useEffect(() => {
-    if (!showPriority) return
+    if (!showPopover) return
     const handle = (e) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target)) {
-        setShowPriority(false)
+        setShowPopover(false)
       }
     }
     document.addEventListener('mousedown', handle)
@@ -98,31 +128,41 @@ export default function TaskItem({ task, now, granularity, index = 0, animMs = 3
       document.removeEventListener('mousedown', handle)
       document.removeEventListener('touchstart', handle)
     }
-  }, [showPriority])
+  }, [showPopover])
 
   // Close on Escape
   useEffect(() => {
-    if (!showPriority) return
-    const handle = (e) => { if (e.key === 'Escape') setShowPriority(false) }
+    if (!showPopover) return
+    const handle = (e) => { if (e.key === 'Escape') setShowPopover(false) }
     document.addEventListener('keydown', handle)
     return () => document.removeEventListener('keydown', handle)
-  }, [showPriority])
+  }, [showPopover])
 
   const handleContextMenu = (e) => {
     e.preventDefault()
-    const POP_W = 208  // w-52
-    const POP_H = 240  // estimated height with actions
+    const POP_W = 208
+    const POP_H = 280
     const vw = window.innerWidth
     const vh = window.innerHeight
     const left = e.clientX + POP_W > vw ? e.clientX - POP_W : e.clientX
     const top  = e.clientY + POP_H > vh ? e.clientY - POP_H : e.clientY + 8
     setPopoverPos({ x: left, y: top })
-    setShowPriority((v) => !v)
+    setShowPopover((v) => !v)
+  }
+
+  const handleCheckboxClick = () => {
+    if (task.is_repeat) {
+      // Repeat task: advance to next due date instead of toggling done
+      advanceTask(task.id)
+    } else {
+      toggleTask(task.id)
+    }
   }
 
   const done     = task.status === 'done'
   const archived = task.archived ?? false
-  // D-Day는 보관 여부와 무관하게 완료됐을 때만 숨김
+  const isRepeat = task.is_repeat ?? false
+  // D-Day is hidden for completed tasks
   const dday     = done ? null : getDdayInfo(task.due_date, task.due_time, granularity, now)
 
   const priority = task.priority ?? 3.0
@@ -142,6 +182,15 @@ export default function TaskItem({ task, now, granularity, index = 0, animMs = 3
     <div
       style={animStyle}
       onContextMenu={handleContextMenu}
+      onMouseDown={startLongPress}
+      onMouseUp={cancelLongPress}
+      onMouseLeave={cancelLongPress}
+      onTouchStart={startLongPress}
+      onTouchEnd={(e) => {
+        cancelLongPress()
+        if (didLongPress.current) e.preventDefault()
+      }}
+      onTouchMove={cancelLongPress}
       className={`relative flex items-start gap-3 px-4 py-3 border-b border-gray-100 transition-colors ${
         archived && done  ? 'bg-amber-50/60 hover:bg-amber-50' :
         archived          ? 'bg-amber-50/60 hover:bg-amber-50' :
@@ -149,22 +198,24 @@ export default function TaskItem({ task, now, granularity, index = 0, animMs = 3
                             'bg-white hover:bg-gray-50'
       }`}
     >
-      {/* ── Checkbox (archived 여부와 무관하게 done 토글) ─────────────────── */}
+      {/* ── Checkbox ──────────────────────────────────────────────────────── */}
       <button
-        onClick={() => toggleTask(task.id)}
-        aria-label={done ? '완료 취소' : '완료 표시'}
+        onClick={handleCheckboxClick}
+        aria-label={isRepeat ? '다음으로' : (done ? '완료 취소' : '완료 표시')}
         className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center
                     justify-center transition-colors ${
                       done && archived  ? 'bg-amber-300 border-amber-300' :
                       done              ? 'bg-gray-300 border-gray-300'   :
                       archived          ? 'border-amber-300 hover:border-amber-500' :
+                      isRepeat          ? 'border-blue-300 hover:border-blue-500' :
                                           'border-gray-300 hover:border-zinc-600'
                     }`}
       >
-        {done && <Check size={12} strokeWidth={3} className="text-white" />}
+        {done && !isRepeat && <Check size={12} strokeWidth={3} className="text-white" />}
+        {isRepeat && <RefreshCw size={10} strokeWidth={2} className={done ? 'text-white' : 'text-blue-400'} />}
       </button>
 
-      {/* ── Content ───────────────────────────────────────────────────────── */}
+      {/* ── Content ────────────────────────────────────────────────────────── */}
       <div className="flex-1 min-w-0">
         <p
           className={`text-sm font-medium leading-snug ${
@@ -175,6 +226,11 @@ export default function TaskItem({ task, now, granularity, index = 0, animMs = 3
           }`}
         >
           {task.title}
+          {isRepeat && (
+            <span className="ml-1.5 text-[9px] font-bold text-blue-400 bg-blue-50 rounded px-1 py-0.5 select-none">
+              반복
+            </span>
+          )}
         </p>
 
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -199,7 +255,7 @@ export default function TaskItem({ task, now, granularity, index = 0, animMs = 3
         </div>
       </div>
 
-      {/* ── Actions ───────────────────────────────────────────────────────── */}
+      {/* ── Actions ────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
         {/* Archive toggle */}
         <button
@@ -227,8 +283,8 @@ export default function TaskItem({ task, now, granularity, index = 0, animMs = 3
 
     </div>
 
-    {/* ── Context Menu — portal to body ────────────────────────────────── */}
-    {showPriority && createPortal(
+    {/* ── Context Menu (right-click or long-press) ─────────────────────── */}
+    {showPopover && createPortal(
       <div
         ref={popoverRef}
         style={{ position: 'fixed', left: popoverPos.x, top: popoverPos.y, zIndex: 9999 }}
@@ -262,20 +318,42 @@ export default function TaskItem({ task, now, granularity, index = 0, animMs = 3
 
         {/* Action buttons */}
         <div className="py-1">
-          {/* 완료하기 / 완료 취소 */}
-          <button
-            onClick={() => { if (!archived) toggleTask(task.id); setShowPriority(false) }}
-            disabled={archived}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700
-                       hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <Check size={14} strokeWidth={2.5} className={done ? 'text-zinc-900' : 'text-gray-300'} />
-            {done ? '완료 취소' : '완료하기'}
-          </button>
+          {/* 반복 일정: 다음으로 / 이전으로 */}
+          {isRepeat ? (
+            <>
+              <button
+                onClick={() => { advanceTask(task.id); setShowPopover(false) }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700
+                           hover:bg-blue-50 transition-colors"
+              >
+                <ChevronRight size={14} className="text-blue-400" />
+                다음으로
+              </button>
+              <button
+                onClick={() => { retreatTask(task.id); setShowPopover(false) }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700
+                           hover:bg-blue-50 transition-colors"
+              >
+                <ChevronLeft size={14} className="text-blue-400" />
+                이전으로
+              </button>
+            </>
+          ) : (
+            /* 일반 일정: 완료하기 / 완료 취소 */
+            <button
+              onClick={() => { if (!archived) toggleTask(task.id); setShowPopover(false) }}
+              disabled={archived}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700
+                         hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <Check size={14} strokeWidth={2.5} className={done ? 'text-zinc-900' : 'text-gray-300'} />
+              {done ? '완료 취소' : '완료하기'}
+            </button>
+          )}
 
           {/* 보관하기 / 보관 취소 */}
           <button
-            onClick={() => { archiveTask(task.id); setShowPriority(false) }}
+            onClick={() => { archiveTask(task.id); setShowPopover(false) }}
             className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700
                        hover:bg-gray-50 transition-colors"
           >
@@ -288,7 +366,7 @@ export default function TaskItem({ task, now, granularity, index = 0, animMs = 3
 
           {/* 삭제하기 */}
           <button
-            onClick={() => { deleteTask(task.id); setShowPriority(false) }}
+            onClick={() => { deleteTask(task.id); setShowPopover(false) }}
             className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-500
                        hover:bg-red-50 transition-colors"
           >

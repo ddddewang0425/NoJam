@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import TasksPage from './pages/TasksPage'
 import LedgerPage from './pages/LedgerPage'
 import SettingsPage from './pages/SettingsPage'
+import TimetablePage from './pages/TimetablePage'
 import OnboardingPage from './pages/OnboardingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -27,6 +28,7 @@ export default function App() {
           }
         >
           <Route path="tasks" element={<TasksPage />} />
+          <Route path="timetable" element={<TimetablePage />} />
           <Route path="ledger" element={<LedgerPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

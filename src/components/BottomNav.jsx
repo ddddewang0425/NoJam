@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { CheckSquare, BookOpen, Settings } from 'lucide-react'
+import { CheckSquare, BookOpen, Settings, LayoutGrid } from 'lucide-react'
 
 const navItems = [
-  { to: '/tasks', icon: CheckSquare, label: '일정' },
-  { to: '/ledger', icon: BookOpen, label: '가계부' },
-  { to: '/settings', icon: Settings, label: '설정' },
+  { to: '/tasks',     icon: CheckSquare, label: '일정'   },
+  { to: '/timetable', icon: LayoutGrid,  label: '시간표' },
+  { to: '/ledger',    icon: BookOpen,    label: '가계부' },
+  { to: '/settings',  icon: Settings,    label: '설정'   },
 ]
 
 export default function BottomNav() {

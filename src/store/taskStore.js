@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { format } from 'date-fns'
 import { supabase } from '../supabase'
 import useAuthStore from './authStore'
 
@@ -96,13 +97,17 @@ const useTaskStore = create((set, get) => ({
   },
 
   // ── Add ────────────────────────────────────────────────────────────────────
-  addTask: async ({ title, due_date, due_time }) => {
+  addTask: async ({ title, due_date, due_time, is_repeat = false, repeat_days = 0, repeat_hours = 0, repeat_minutes = 0, repeat_seconds = 0 }) => {
     const user = useAuthStore.getState().user
     if (!user) return null
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .insert([{ title, due_date, due_time: due_time || null, status: 'in_progress', archived: false, priority: 3.0, user_id: user.id }])
+        .insert([{
+          title, due_date, due_time: due_time || null,
+          status: 'in_progress', archived: false, priority: 3.0, user_id: user.id,
+          is_repeat, repeat_days, repeat_hours, repeat_minutes, repeat_seconds,
+        }])
         .select()
         .single()
 
@@ -184,6 +189,61 @@ const useTaskStore = create((set, get) => ({
       set({ error: error.message })
     }
   },
+
+  // ── Advance (repeat task: move due date/time forward by repeat interval) ───
+  advanceTask: async (id) => {
+    const task = get().tasks.find((t) => t.id === id)
+    if (!task || !task.is_repeat) return
+
+    const totalMs =
+      (task.repeat_days    || 0) * 86_400_000 +
+      (task.repeat_hours   || 0) *  3_600_000 +
+      (task.repeat_minutes || 0) *     60_000 +
+      (task.repeat_seconds || 0) *      1_000
+
+    const [y, mo, d]   = task.due_date.split('-').map(Number)
+    const [h, mi]      = (task.due_time || '00:00').split(':').map(Number)
+    const current      = new Date(y, mo - 1, d, h, mi)
+    const next         = new Date(current.getTime() + totalMs)
+    const due_date     = format(next, 'yyyy-MM-dd')
+    const due_time     = task.due_time ? format(next, 'HH:mm') : null
+
+    set((s) => ({
+      tasks: sortTasks(
+        s.tasks.map((t) => t.id === id ? { ...t, due_date, due_time, status: 'in_progress' } : t),
+        s.sortMode,
+      ),
+    }))
+    await supabase.from('tasks').update({ due_date, due_time, status: 'in_progress' }).eq('id', id)
+  },
+
+  // ── Retreat (repeat task: move due date/time backward by repeat interval) ──
+  retreatTask: async (id) => {
+    const task = get().tasks.find((t) => t.id === id)
+    if (!task || !task.is_repeat) return
+
+    const totalMs =
+      (task.repeat_days    || 0) * 86_400_000 +
+      (task.repeat_hours   || 0) *  3_600_000 +
+      (task.repeat_minutes || 0) *     60_000 +
+      (task.repeat_seconds || 0) *      1_000
+
+    const [y, mo, d]   = task.due_date.split('-').map(Number)
+    const [h, mi]      = (task.due_time || '00:00').split(':').map(Number)
+    const current      = new Date(y, mo - 1, d, h, mi)
+    const prev         = new Date(current.getTime() - totalMs)
+    const due_date     = format(prev, 'yyyy-MM-dd')
+    const due_time     = task.due_time ? format(prev, 'HH:mm') : null
+
+    set((s) => ({
+      tasks: sortTasks(
+        s.tasks.map((t) => t.id === id ? { ...t, due_date, due_time } : t),
+        s.sortMode,
+      ),
+    }))
+    await supabase.from('tasks').update({ due_date, due_time }).eq('id', id)
+  },
 }))
+
 
 export default useTaskStore

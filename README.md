@@ -58,20 +58,31 @@ src/
   index.css                   # Tailwind directives + 글로벌 리셋 + calSlide 애니메이션
   supabase.js                 # createClient (env vars)
   store/
-    taskStore.js              # Zustand 전역 스토어
+    taskStore.js              # Zustand 전역 스토어 (Tasks)
+    timetableStore.js         # 시간표 상태 및 CRUD (timetable_entries)
+    dayNoteStore.js           # 요일별 공유 노트 상태 및 CRUD (day_notes)
   pages/
+    LoginPage.jsx             # 로그인 (Supabase Auth)
+    RegisterPage.jsx          # 회원가입
+    OnboardingPage.jsx        # 최초 환영 화면
     TasksPage.jsx             # 헤더(아이콘+QuickAdd) + 탭(모바일 슬라이드 패널) + ListView|CalendarView
-    LedgerPage.jsx            # placeholder ("업데이트 예정")
+    TimetablePage.jsx         # 시간표 뷰 (24시간 그리드 + 요일별 노트 편집기)
+    LedgerPage.jsx            # 가계부 (업데이트 예정)
   components/
     Layout.jsx                # 데스크톱 사이드바 + 모바일 하단 네비
-    Sidebar.jsx               # zinc-900 배경, /tasks /ledger 네비링크
+    Sidebar.jsx               # 데스크톱 좌측 배너 메뉴
     BottomNav.jsx             # 모바일 고정 하단 바
     tasks/
-      QuickAdd.jsx            # 인라인 입력폼 (ScrollDatePicker + ScrollTimePicker)
+      QuickAdd.jsx            # 인라인 입력폼 (스크롤 피커, 반복 일정 설정 인터페이스 포함)
       ListView.jsx            # 필터 탭 + D-Day 설정 + TaskItem 목록
-      TaskItem.jsx            # 개별 태스크 행 (체크박스, D-day, 우선순위)
+      TaskItem.jsx            # 개별 태스크 행 (체크박스, D-day, 우선순위, 롱프레스 반복 이동)
       CalendarView.jsx        # 월간 달력 그리드 + 양방향 스와이프 + AddTask/Detail 패널
-      ScrollDatePicker.jsx    # 드럼롤 스크롤 날짜/시간 피커
+      ScrollDatePicker.jsx    # 드럼롤 스크롤 날짜/시간 피커 (TimetableTimePicker 포함)
+    timetable/
+      TimetableGrid.jsx       # 06:00~06:00 시간표 그리드 UI 본체
+      TimetableEntryForm.jsx  # 일정 추가 다이얼로그 (다중 요일, 색상 선택, Task 연동 생성)
+      TaskDeadlineOverlay.jsx # Task 마감시간 캔버스에 표시 (빨간 네온 선)
+      DayNotePanel.jsx        # 요일별 공유 노트 블록 에디터 (Notion 스타일)
 public/
   icons/                      # PWA 아이콘 (svg, png 192/512, favicon.ico 등)
 supabase/
@@ -86,16 +97,40 @@ android/                      # Android Studio 네이티브 프로젝트 (npx ca
 
 ```sql
 CREATE TABLE public.tasks (
-  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  title      TEXT        NOT NULL,
-  due_date   DATE        NOT NULL,           -- 'YYYY-MM-DD'
-  due_time   TIME,                           -- nullable, 없으면 24:00으로 처리
-  status     TEXT        NOT NULL DEFAULT 'in_progress',  -- 'in_progress' | 'done'
-  archived   BOOLEAN     NOT NULL DEFAULT false,
-  priority   FLOAT       NOT NULL DEFAULT 3.0,            -- 1.0~5.0
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  title          TEXT        NOT NULL,
+  due_date       DATE        NOT NULL,           -- 'YYYY-MM-DD'
+  due_time       TIME,                           -- nullable, 없으면 24:00으로 처리
+  status         TEXT        NOT NULL DEFAULT 'in_progress',
+  archived       BOOLEAN     NOT NULL DEFAULT false,
+  priority       FLOAT       NOT NULL DEFAULT 3.0,
+  -- 반복 일정 옵션
+  is_repeat      BOOLEAN     NOT NULL DEFAULT false,
+  repeat_days    INT         NOT NULL DEFAULT 0,
+  repeat_hours   INT         NOT NULL DEFAULT 0,
+  repeat_minutes INT         NOT NULL DEFAULT 0,
+  repeat_seconds INT         NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
--- RLS: allow_all (FOR ALL USING true) — 개발용
+
+CREATE TABLE public.timetable_entries (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID        NOT NULL REFERENCES public.users(id),
+  title        TEXT        NOT NULL,
+  day_of_week  INT         NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+  start_time   TIME        NOT NULL,
+  end_time     TIME        NOT NULL,
+  color        TEXT        NOT NULL DEFAULT '#a5b4fc',
+  task_id      UUID        REFERENCES public.tasks(id) ON DELETE CASCADE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.day_notes (
+  day_of_week  INT         NOT NULL PRIMARY KEY CHECK (day_of_week BETWEEN 0 AND 6),
+  content      TEXT        NOT NULL DEFAULT '',
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- 모든 테이블은 RLS를 통해 보호됩니다 (users 테이블 및 allow 정책).
 ```
 
 ---
@@ -135,10 +170,21 @@ CREATE TABLE public.tasks (
 
 ### QuickAdd (인라인 입력, 모달 없음)
 
-- **Row 1**: 제목 텍스트 입력
-- **Row 2**: **ScrollDatePicker**(드럼롤 날짜) + **ScrollTimePicker**(드럼롤 시간) + [추가] 버튼
+- **Row 1**: 제목 텍스트 입력, 체크박스 (반복 토글 `↻`)
+- **Row 2**: **ScrollDatePicker**(드럼롤 날짜) + **ScrollTimePicker**(시간) + [추가]
+- **반복 패널**: 반복 체크 시 확장되어 일/시간/분/초 간격 세팅 화면 표시.
+- `due_time`이 없으면 `null` 저장 (정렬 시 맨 뒤 = 24:00 취급).
 
-`due_time`이 없으면 `null` 저장 (정렬 시 맨 뒤 = 24:00 취급). UI에서는 `24:00` 표시.
+### 시간표 (TimetableView) + 요일 노트 (DayNotePanel)
+
+- **시간표 그리드**: `06:00`부터 다음 날 `06:00`까지 24시간 세로 스크롤 레이아웃.
+- **다중 요일 추가**: 일정 추가 폼에서 월~일 중 복수 선택이 가능하며, 색상 지정 및 **반복 Task 자동 연동 옵션** 제공 (시간표 내 블록 폭파 시 Task도 종속 삭제됨 CASCADE).
+- **Task 마감선 오버레이**: `due_time`이 설정된 Task는 해당 요일 그리드 위에 빨간 네온 라인으로 중첩 표기.
+- **요일별 공유 노트**:
+  - 시간표 뚝딱 상단의 **요일 헤더**를 클릭하면 Frost Glass 느낌의 에디터 패널이 오버레이 형태로 오른쪽에서 열림.
+  - 전 유저 공통으로 열람/수정 (`user_id` 컬럼 없음).
+  - Notion 형태의 단일 `contenteditable` **블록 에디터**. ( `- ` 불릿, `1. ` 넘버링, `# ` 헤딩 지원).
+  - 무한 렌더링 탭 들여쓰기/내어쓰기. (모바일 하단 버튼 구비).
 
 ### 모바일 탭 전환 (슬라이딩 패널)
 
@@ -239,11 +285,15 @@ build.outDir: 'dist'       // Capacitor webDir와 일치
 
 ## 라우팅
 
-| 경로      | 컴포넌트     | 상태                  |
-| --------- | ------------ | --------------------- |
-| `/`       | → redirect   | `/tasks`로 리다이렉트 |
-| `/tasks`  | `TasksPage`  | 구현 완료             |
-| `/ledger` | `LedgerPage` | placeholder           |
+| 경로          | 컴포넌트         | 상태                           |
+| ------------- | ---------------- | ------------------------------ |
+| `/`           | → redirect       | `/tasks`로 리다이렉트 (Auth)   |
+| `/login`      | `LoginPage`      | 구현 완료 (비밀번호만 사용)    |
+| `/register`   | `RegisterPage`   | 구현 완료                      |
+| `/onboarding` | `OnboardingPage` | 최초 1회 환영 화면             |
+| `/tasks`      | `TasksPage`      | 구현 완료 (ListView/CalView)   |
+| `/timetable`  | `TimetablePage`  | 시간표 + 요일별 공유 블록 노트 |
+| `/ledger`     | `LedgerPage`     | placeholder                    |
 
 ---
 

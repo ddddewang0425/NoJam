@@ -329,3 +329,59 @@ export function ScrollTimePicker({ value, onChange }) {
 
 /* 기본 export (하위 호환) */
 export default ScrollDatePicker
+
+/* ─── 시간표 전용 시간 피커: 06~05시, 10분 단위 ─── */
+// Hours wrapped around midnight starting at 06
+const TIMETABLE_HOURS = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5]
+const TIMETABLE_MINS  = [0, 10, 20, 30, 40, 50]
+
+export function TimetableTimePicker({ value, onChange, label = '시간 선택' }) {
+  const [open, setOpen] = useState(false)
+  const btnRef = useRef(null)
+
+  const parseValue = (v) => {
+    if (!v) return { h: 9, m: 0 }
+    const [hh, mm] = v.split(':').map(Number)
+    // snap minute to nearest 10
+    const snappedM = Math.round(mm / 10) * 10 % 60
+    return { h: hh, m: snappedM }
+  }
+  const { h: initH, m: initM } = parseValue(value)
+  const [hour, setHour] = useState(initH)
+  const [min,  setMin]  = useState(initM)
+
+  const confirm = () => {
+    onChange(`${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`)
+    setOpen(false)
+  }
+
+  const displayVal = value || '시간 선택'
+
+  return (
+    <div data-picker-root className="relative inline-block">
+      <button ref={btnRef} type="button" onClick={() => setOpen(p => !p)}
+              className="text-sm text-gray-700 border border-gray-200 rounded-md px-2 py-1.5
+                         focus:outline-none focus:border-zinc-400 transition-colors hover:border-zinc-300 whitespace-nowrap">
+        {displayVal}
+      </button>
+
+      {open && (
+        <PickerPortal triggerRef={btnRef} onClose={() => setOpen(false)}>
+          <p className="text-xs text-zinc-400 text-center mb-2 font-medium tracking-wide">{label}</p>
+          <div className="flex items-center justify-center gap-0.5">
+            <Drum items={TIMETABLE_HOURS} value={hour} onChange={setHour} width={62} />
+            <span className="text-zinc-400 text-base font-bold px-1">:</span>
+            <Drum items={TIMETABLE_MINS}  value={min}  onChange={setMin}  width={62} />
+          </div>
+          <button onClick={confirm}
+                  className="mt-3 w-full py-1.5 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-700 transition-colors">
+            확인
+          </button>
+        </PickerPortal>
+      )}
+    </div>
+  )
+}
+
+/* Export Drum for reuse in timetable components */
+export { Drum }

@@ -1,11 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { CheckSquare, BookOpen, Settings, LogOut, User } from 'lucide-react'
+import { CheckSquare, BookOpen, Settings, LogOut, User, LayoutGrid } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import useTaskStore from '../store/taskStore'
 
 const navItems = [
-  { to: '/tasks', icon: CheckSquare, label: '일정 관리' },
-  { to: '/ledger', icon: BookOpen, label: '가계부' },
+  { to: '/tasks',     icon: CheckSquare, label: '일정 관리' },
+  { to: '/timetable', icon: LayoutGrid,  label: '시간표'   },
+  { to: '/ledger',    icon: BookOpen,    label: '가계부'   },
 ]
 
 export default function Sidebar() {
