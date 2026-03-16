@@ -33,13 +33,112 @@ function SliderRow({ label, desc, value, min, max, step, onChange, formatVal }) 
   )
 }
 
+function DualRangeSlider({ label, desc, min, max, step, value, onChange, formatVal }) {
+  const [minVal, maxVal] = value
+  
+  // Calculate percentage for active track background
+  const getPercent = (v) => Math.round(((v - min) / (max - min)) * 100)
+  const percentMin = getPercent(minVal)
+  const percentMax = getPercent(maxVal)
+
+  const handleMinChange = (e) => {
+    const v = Math.min(Number(e.target.value), maxVal - 1)
+    onChange([v, maxVal])
+  }
+
+  const handleMaxChange = (e) => {
+    const v = Math.max(Number(e.target.value), minVal + 1)
+    onChange([minVal, v])
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-800">{label}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+        </div>
+        <span className="text-sm font-bold text-zinc-900 ml-4 text-right flex-shrink-0">
+          {formatVal(minVal)} ~ {formatVal(maxVal)}
+        </span>
+      </div>
+
+      <div className="relative pt-3 pb-1 w-full flex items-center h-4">
+        {/* Track Background */}
+        <div className="absolute w-full h-1 bg-gray-200 rounded-full z-0" />
+        
+        {/* Active Track */}
+        <div 
+          className="absolute h-1 bg-zinc-900 rounded-full z-10" 
+          style={{ left: `${percentMin}%`, width: `${percentMax - percentMin}%` }} 
+        />
+        
+        {/* Thumbs via range inputs overlaid */}
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={minVal}
+          onChange={handleMinChange}
+          className="absolute w-full h-1 appearance-none bg-transparent outline-none m-0 pointer-events-none z-20"
+          style={{ WebkitAppearance: 'none' }}
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={maxVal}
+          onChange={handleMaxChange}
+          className="absolute w-full h-1 appearance-none bg-transparent outline-none m-0 pointer-events-none z-30"
+          style={{ WebkitAppearance: 'none' }}
+        />
+      </div>
+      
+      {/* CSS for custom thumb (needed to restore pointer-events on the thumb itself) */}
+      <style>{`
+        input[type="range"]::-webkit-slider-thumb {
+          pointer-events: auto;
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #18181b; 
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-moz-range-thumb {
+          pointer-events: auto;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #18181b; 
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+      `}</style>
+      
+      <div className="flex justify-between mt-1 pt-1">
+        <span className="text-[10px] text-gray-300">{formatVal(min)}</span>
+        <span className="text-[10px] text-gray-300">{formatVal(max)}</span>
+      </div>
+    </div>
+  )
+}
+
 export default function SettingsPage() {
   const priorityStep       = useTaskStore((s) => s.priorityStep)
   const pageTransitionMs   = useTaskStore((s) => s.pageTransitionMs)
   const taskAnimMs         = useTaskStore((s) => s.taskAnimMs)
+  const timetableRange     = useTaskStore((s) => s.timetableRange)
+  
   const setPriorityStep    = useTaskStore((s) => s.setPriorityStep)
   const setPageTransitionMs = useTaskStore((s) => s.setPageTransitionMs)
   const setTaskAnimMs      = useTaskStore((s) => s.setTaskAnimMs)
+  const setTimetableRange  = useTaskStore((s) => s.setTimetableRange)
 
   const { user, updateCredentials, logout } = useAuthStore()
 
@@ -220,6 +319,25 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ── 시간표 설정 ──────────────────────────────────────────────────── */}
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+            시간표 설정
+          </h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
+            <DualRangeSlider
+              label="표시 시간 범위"
+              desc="시간표 화면에서 표시할 스크롤 영역 (최소 06:00 ~ 최대 06:00)"
+              value={timetableRange}
+              min={6}
+              max={30}
+              step={1}
+              onChange={setTimetableRange}
+              formatVal={(v) => `${String(v % 24).padStart(2, '0')}:00`}
+            />
           </div>
         </section>
 

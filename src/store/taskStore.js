@@ -50,6 +50,8 @@ const useTaskStore = create((set, get) => ({
   ddayGranularity: localStorage.getItem('dday-granularity') || '시간',
 
   // Settings (persisted)
+  timetableRange:   getLS('timetable-range',    [6, 30]),
+  timetableRowH:    getLS('timetable-row-h',    48),
   priorityStep:     getLS('priority-step',      0.5),
   pageTransitionMs: getLS('page-transition-ms', 300),
   taskAnimMs:       getLS('task-anim-ms',        300),
@@ -72,9 +74,11 @@ const useTaskStore = create((set, get) => ({
     set({ ddayGranularity: g })
   },
 
-  setPriorityStep:     (v) => { setLS('priority-step',      v); set({ priorityStep:     v }) },
-  setPageTransitionMs: (v) => { setLS('page-transition-ms', v); set({ pageTransitionMs: v }) },
-  setTaskAnimMs:       (v) => { setLS('task-anim-ms',        v); set({ taskAnimMs:       v }) },
+  setTimetableRange:     (v) => { setLS('timetable-range',    v); set({ timetableRange:   v }) },
+  setTimetableRowH:      (v) => { setLS('timetable-row-h',    v); set({ timetableRowH:    v }) },
+  setPriorityStep:       (v) => { setLS('priority-step',      v); set({ priorityStep:     v }) },
+  setPageTransitionMs:   (v) => { setLS('page-transition-ms', v); set({ pageTransitionMs: v }) },
+  setTaskAnimMs:         (v) => { setLS('task-anim-ms',        v); set({ taskAnimMs:       v }) },
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   fetchTasks: async () => {

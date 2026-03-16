@@ -13,15 +13,7 @@ const MIN_ROW_H     = 24
 const MAX_ROW_H     = 120
 const STEP_ROW_H    = 12
 const DEFAULT_ROW_H = 48
-const START_HOUR    = 6    // grid starts at 06:00
-const TOTAL_HOURS   = 24
 const DAYS_KO       = ['일', '월', '화', '수', '목', '금', '토']
-
-// Generate 24 hour labels starting at 06:00
-const HOUR_LABELS = Array.from({ length: TOTAL_HOURS }, (_, i) => {
-  const h = (START_HOUR + i) % 24
-  return `${String(h).padStart(2, '0')}:00`
-})
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function timeToMinutes(t) {
@@ -29,9 +21,9 @@ function timeToMinutes(t) {
   return h * 60 + m
 }
 
-function timeToY(t, rowH) {
+function timeToY(t, rowH, startHour) {
   const mins = timeToMinutes(t)
-  const startMins = START_HOUR * 60
+  const startMins = startHour * 60
   const adjusted = (mins - startMins + 1440) % 1440
   return (adjusted / 60) * rowH
 }
@@ -92,24 +84,42 @@ function TaskPopover({ task, onClose }) {
 }
 
 // ── Main Grid ─────────────────────────────────────────────────────────────────
-export default function TimetableGrid() {
+export default function TimetableGrid({ onEditEntry }) {
   const entries     = useTimetableStore((s) => s.entries)
   const deleteEntry = useTimetableStore((s) => s.deleteEntry)
   const tasks       = useTaskStore((s) => s.tasks)
+  const timetableRange = useTaskStore((s) => s.timetableRange || [6, 30])
   const fetchNotes  = useDayNoteStore((s) => s.fetchNotes)
+
+  const [startHour, endHour] = timetableRange
+  const totalHours = endHour - startHour
+
+  // Generate hour labels based on startHour and totalHours
+  const HOUR_LABELS = Array.from({ length: totalHours }, (_, i) => {
+    const h = (startHour + i) % 24
+    return `${String(h).padStart(2, '0')}:00`
+  })
 
   // Fetch shared notes on mount
   useEffect(() => { fetchNotes() }, [fetchNotes])
 
   // Row height (zoom)
-  const [rowH, setRowH] = useState(DEFAULT_ROW_H)
-  const zoomOut = () => setRowH((h) => Math.max(MIN_ROW_H, h - STEP_ROW_H))
-  const zoomIn  = () => setRowH((h) => Math.min(MAX_ROW_H, h + STEP_ROW_H))
+  const rowH = useTaskStore((s) => s.timetableRowH)
+  const setRowH = useTaskStore((s) => s.setTimetableRowH)
+  const zoomOut = () => setRowH(Math.max(MIN_ROW_H, rowH - 1))
+  const zoomIn  = () => setRowH(Math.min(MAX_ROW_H, rowH + 1))
 
   // Week navigation
   const [weekOffset, setWeekOffset] = useState(0)
-  const today     = new Date()
-  const weekStart = addDays(startOfWeek(today, { weekStartsOn: 0 }), weekOffset * 7)
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const weekStart = addDays(startOfWeek(currentTime, { weekStartsOn: 0 }), weekOffset * 7)
   const weekDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 
   // Day note panel
@@ -136,9 +146,8 @@ export default function TimetableGrid() {
     }
   }, [])
 
-  // Tasks for this week that have a due_time
+  // Tasks for this week
   const weekTasks = tasks.filter((t) => {
-    if (!t.due_time) return false
     return weekDates.some((d) => format(d, 'yyyy-MM-dd') === t.due_date)
   })
 
@@ -185,22 +194,24 @@ export default function TimetableGrid() {
         {/* Divider */}
         <div className="w-px h-4 bg-gray-200 mx-0.5" />
 
-        {/* Zoom out */}
-        <button onClick={zoomOut} disabled={rowH <= MIN_ROW_H} title="세로 압축"
-                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30">
-          <ZoomOut size={15} className="text-gray-500" />
-        </button>
-
-        {/* Zoom % */}
-        <span className="text-[11px] text-gray-400 w-8 text-center select-none tabular-nums">
-          {Math.round((rowH / DEFAULT_ROW_H) * 100)}%
-        </span>
-
-        {/* Zoom in */}
-        <button onClick={zoomIn} disabled={rowH >= MAX_ROW_H} title="세로 확대"
-                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30">
-          <ZoomIn size={15} className="text-gray-500" />
-        </button>
+        {/* Zoom slider */}
+        <div className="flex items-center gap-1.5 ml-1 mr-1">
+          <button onClick={zoomOut} disabled={rowH <= MIN_ROW_H} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">
+            <ZoomOut size={14} />
+          </button>
+          <input
+            type="range"
+            min={MIN_ROW_H}
+            max={MAX_ROW_H}
+            step={1}
+            value={rowH}
+            onChange={(e) => setRowH(Number(e.target.value))}
+            className="w-16 sm:w-24 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-zinc-900"
+          />
+          <button onClick={zoomIn} disabled={rowH >= MAX_ROW_H} className="text-gray-400 hover:text-gray-700 disabled:opacity-30">
+            <ZoomIn size={14} />
+          </button>
+        </div>
       </div>
 
       {/* ── Scrollable grid ───────────────────────────────────────────────── */}
@@ -222,7 +233,7 @@ export default function TimetableGrid() {
           {/* Day columns */}
           {weekDates.map((date, colIdx) => {
             const dateStr    = format(date, 'yyyy-MM-dd')
-            const isToday    = dateStr === format(today, 'yyyy-MM-dd')
+            const isToday    = dateStr === format(currentTime, 'yyyy-MM-dd')
             const jsDow      = date.getDay() // 0=Sun…6=Sat (same as DB convention)
             const colEntries = entries.filter((e) => e.day_of_week === jsDow)
             const colTasks   = weekTasks.filter((t) => t.due_date === dateStr)
@@ -248,7 +259,7 @@ export default function TimetableGrid() {
                 </div>
 
                 {/* Hour rows + positioned elements */}
-                <div className="relative" style={{ height: rowH * TOTAL_HOURS }}>
+                <div className="relative" style={{ height: rowH * totalHours }}>
                   {/* Grid lines */}
                   {HOUR_LABELS.map((_, hi) => (
                     <div key={hi} style={{ top: hi * rowH, height: rowH }}
@@ -257,7 +268,7 @@ export default function TimetableGrid() {
 
                   {/* Timetable entry blocks */}
                   {colEntries.map((entry) => {
-                    const top    = timeToY(entry.start_time, rowH)
+                    const top    = timeToY(entry.start_time, rowH, startHour)
                     const height = durationToPx(entry.start_time, entry.end_time, rowH)
                     return (
                       <div key={entry.id}
@@ -267,13 +278,14 @@ export default function TimetableGrid() {
                              backgroundColor: entry.color + 'cc',
                              borderLeft: `3px solid ${entry.color}`,
                              borderRadius: 6,
+                             zIndex: 10,
                            }}
                            onContextMenu={(e) => handleEntryCtx(e, entry)}
                            className="overflow-hidden cursor-pointer hover:brightness-95 transition-filter">
                         <p className="text-[10px] font-semibold px-1.5 pt-1 leading-tight text-zinc-800 truncate">
                           {entry.title}
                         </p>
-                        {rowH >= 36 && (
+                        {height >= 28 && (
                           <p className="text-[9px] px-1.5 text-zinc-600 leading-tight">
                             {entry.start_time.substring(0,5)}–{entry.end_time.substring(0,5)}
                           </p>
@@ -284,14 +296,15 @@ export default function TimetableGrid() {
 
                   {/* Task deadline red neon lines */}
                   {colTasks.map((task) => {
-                    const top  = timeToY(task.due_time, rowH)
+                    const timeStr = task.due_time || '24:00'
+                    const top  = timeToY(timeStr, rowH, startHour)
                     const done = task.status === 'done'
                     return (
                       <div key={task.id}
                            style={{
                              position: 'absolute',
                              top: top - 1.5,
-                             left: 0, right: 0, height: 3, zIndex: 5,
+                             left: 0, right: 0, height: 3, zIndex: 50,
                              cursor: 'pointer',
                              background: done ? 'rgba(156,163,175,0.5)' : '#ef4444',
                              boxShadow: done ? 'none'
@@ -303,6 +316,22 @@ export default function TimetableGrid() {
                       />
                     )
                   })}
+
+                  {/* Current time green neon line (only for today) */}
+                  {isToday && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: timeToY(format(currentTime, 'HH:mm'), rowH, startHour) - 1,
+                        left: 0, right: 0, height: 2, zIndex: 60,
+                        background: '#22c55e', // text-green-500
+                        boxShadow: '0 0 6px 2px rgba(34,197,94,0.7), 0 0 12px 4px rgba(34,197,94,0.35)',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-green-500 rounded-full" />
+                    </div>
+                  )}
                 </div>
               </div>
             )
@@ -324,6 +353,15 @@ export default function TimetableGrid() {
         <div ref={entryMenuRef}
              style={{ position: 'fixed', left: entryMenu.x, top: entryMenu.y, zIndex: 9999 }}
              className="bg-white border border-gray-200 rounded-xl shadow-xl w-40 overflow-hidden py-1">
+          <button
+            onClick={() => {
+              if (onEditEntry) onEditEntry(entryMenu.entry)
+              setEntryMenu(null)
+            }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+            수정하기
+          </button>
           <button
             onClick={() => { deleteEntry(entryMenu.entry.id); setEntryMenu(null) }}
             className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors">
