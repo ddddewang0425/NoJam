@@ -117,6 +117,7 @@ CREATE TABLE public.timetable_entries (
   id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      UUID        NOT NULL REFERENCES public.users(id),
   title        TEXT        NOT NULL,
+  subtitle     TEXT,
   day_of_week  INT         NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
   start_time   TIME        NOT NULL,
   end_time     TIME        NOT NULL,

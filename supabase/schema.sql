@@ -112,3 +112,8 @@ ALTER TABLE public.day_notes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "allow_all_day_notes"
   ON public.day_notes FOR ALL USING (true) WITH CHECK (true);
 
+-- ============================================================
+-- 마이그레이션 v0.7: 시간표 일정에 subtitle (부제목/강의실) 추가
+-- ============================================================
+ALTER TABLE public.timetable_entries ADD COLUMN IF NOT EXISTS subtitle TEXT;
+

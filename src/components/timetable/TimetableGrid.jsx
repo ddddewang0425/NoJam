@@ -281,12 +281,17 @@ export default function TimetableGrid({ onEditEntry }) {
                              zIndex: 10,
                            }}
                            onContextMenu={(e) => handleEntryCtx(e, entry)}
-                           className="overflow-hidden cursor-pointer hover:brightness-95 transition-filter">
-                        <p className="text-[10px] font-semibold px-1.5 pt-1 leading-tight text-zinc-800 truncate">
+                           className="overflow-hidden cursor-pointer hover:brightness-95 transition-filter flex flex-col pt-1">
+                        <p className="text-[10px] font-semibold px-1.5 leading-none text-zinc-800 truncate">
                           {entry.title}
                         </p>
-                        {height >= 28 && (
-                          <p className="text-[9px] px-1.5 text-zinc-600 leading-tight">
+                        {entry.subtitle && height >= 28 && (
+                          <p className="text-[9px] px-1.5 mt-1 text-zinc-700 opacity-90 whitespace-pre-wrap break-keep" style={{ lineHeight: '1.2' }}>
+                            {entry.subtitle}
+                          </p>
+                        )}
+                        {((!entry.subtitle && height >= 28) || (entry.subtitle && height >= 40)) && (
+                          <p className={`text-[9px] px-1.5 leading-none text-zinc-600 truncate ${entry.subtitle ? 'mt-1' : 'mt-1'}`}>
                             {entry.start_time.substring(0,5)}–{entry.end_time.substring(0,5)}
                           </p>
                         )}

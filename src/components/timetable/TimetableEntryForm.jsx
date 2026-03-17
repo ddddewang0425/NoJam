@@ -39,6 +39,7 @@ export default function TimetableEntryForm({ onClose, initialData = null }) {
   const isEdit = !!initialData
 
   const [title,      setTitle]      = useState(initialData?.title || '')
+  const [subtitle,   setSubtitle]   = useState(initialData?.subtitle || '')
   const [selectedDays, setSelectedDays] = useState(initialData ? [initialData.day_of_week] : [])
   const [startTime,  setStartTime]  = useState(initialData?.start_time?.substring(0,5) || '09:00')
   const [endTime,    setEndTime]    = useState(initialData?.end_time?.substring(0,5) || '10:00')
@@ -62,6 +63,7 @@ export default function TimetableEntryForm({ onClose, initialData = null }) {
       // Editing an existing entry (only one day supported intrinsically via Day selection)
       await updateEntry(initialData.id, {
         title: title.trim(),
+        subtitle: subtitle.trim() || null,
         day_of_week: selectedDays[0] ?? initialData.day_of_week,
         start_time: startTime,
         end_time: endTime,
@@ -90,6 +92,7 @@ export default function TimetableEntryForm({ onClose, initialData = null }) {
 
       await addEntry({
         title: title.trim(),
+        subtitle: subtitle.trim() || null,
         days: selectedDays,
         start_time: startTime,
         end_time: endTime,
@@ -125,6 +128,20 @@ export default function TimetableEntryForm({ onClose, initialData = null }) {
           className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:border-transparent
                      placeholder-gray-400"
+        />
+      </div>
+
+      {/* Subtitle */}
+      <div>
+        <label className="text-[11px] font-semibold text-gray-400 tracking-wide select-none">부제목 (선택)</label>
+        <textarea
+          value={subtitle}
+          onChange={(e) => setSubtitle(e.target.value)}
+          placeholder="강의실, 교수님, 혹은 관련된 메모..."
+          rows={2}
+          className="mt-1 w-full px-3 py-2 text-xs border border-gray-200 rounded-lg
+                     focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:border-transparent
+                     placeholder-gray-400 resize-none"
         />
       </div>
 

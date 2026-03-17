@@ -28,7 +28,7 @@ const useTimetableStore = create((set, get) => ({
   },
 
   // ── Add (called with an array of day_of_week values for multi-day support) ─
-  addEntry: async ({ title, days, start_time, end_time, color, taskIds }) => {
+  addEntry: async ({ title, subtitle, days, start_time, end_time, color, taskIds }) => {
     // days = array of day_of_week ints, taskIds = parallel array (null if no link)
     const user = useAuthStore.getState().user
     if (!user) return
@@ -36,6 +36,7 @@ const useTimetableStore = create((set, get) => ({
     const rows = days.map((dow, i) => ({
       user_id:     user.id,
       title,
+      subtitle:    subtitle || null,
       day_of_week: dow,
       start_time,
       end_time,
