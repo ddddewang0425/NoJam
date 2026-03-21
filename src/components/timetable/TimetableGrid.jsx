@@ -244,7 +244,7 @@ export default function TimetableGrid({ onEditEntry }) {
                 {/* Sticky day header — click to open note panel */}
                 <div
                   onClick={() => setOpenNoteDay(openNoteDay === jsDow ? null : jsDow)}
-                  className={`sticky top-0 z-10 h-10 flex flex-col items-center justify-center border-b border-gray-100 cursor-pointer select-none transition-colors ${
+                  className={`sticky top-0 z-40 h-10 flex flex-col items-center justify-center border-b border-gray-100 cursor-pointer select-none transition-colors ${
                     openNoteDay === jsDow
                       ? 'bg-zinc-700 text-white'
                       : isToday
@@ -309,7 +309,7 @@ export default function TimetableGrid({ onEditEntry }) {
                            style={{
                              position: 'absolute',
                              top: top - 1.5,
-                             left: 0, right: 0, height: 3, zIndex: 50,
+                             left: 0, right: 0, height: 3, zIndex: 30,
                              cursor: 'pointer',
                              background: done ? 'rgba(156,163,175,0.5)' : '#ef4444',
                              boxShadow: done ? 'none'
@@ -328,7 +328,7 @@ export default function TimetableGrid({ onEditEntry }) {
                       style={{
                         position: 'absolute',
                         top: timeToY(format(currentTime, 'HH:mm'), rowH, startHour) - 1,
-                        left: 0, right: 0, height: 2, zIndex: 60,
+                        left: 0, right: 0, height: 2, zIndex: 35,
                         background: '#22c55e', // text-green-500
                         boxShadow: '0 0 6px 2px rgba(34,197,94,0.7), 0 0 12px 4px rgba(34,197,94,0.35)',
                         pointerEvents: 'none',
