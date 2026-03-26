@@ -24,11 +24,11 @@ function NativeOnboarding({ navigate }) {
       <div className="flex flex-col items-center gap-5 flex-1 justify-center">
         <img
           src="/icons/icon.svg"
-          alt="NoJam"
+          alt="Dayjee"
           className="w-24 h-24 drop-shadow-[0_0_24px_rgba(161,161,170,0.4)]"
         />
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white tracking-tight">NoJam</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Dayjee</h1>
           <p className="text-zinc-400 text-sm mt-1">나만의 일정 관리</p>
         </div>
       </div>
@@ -58,8 +58,8 @@ function WebOnboarding({ navigate }) {
       {/* Navbar */}
       <nav className="flex items-center justify-between px-8 py-5 border-b border-zinc-800/60">
         <div className="flex items-center gap-2.5">
-          <img src="/icons/icon.svg" alt="NoJam" className="w-7 h-7" />
-          <span className="text-white font-semibold text-lg tracking-tight">NoJam</span>
+          <img src="/icons/icon.svg" alt="Dayjee" className="w-7 h-7" />
+          <span className="text-white font-semibold text-lg tracking-tight">Dayjee</span>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -97,7 +97,7 @@ function WebOnboarding({ navigate }) {
               </span>
             </h1>
             <p className="mt-5 text-zinc-400 text-lg leading-relaxed">
-              NoJam으로 할 일을 정리하고,<br className="hidden sm:block" />
+              Dayjee로 할 일을 정리하고,<br className="hidden sm:block" />
               데드라인을 놓치지 마세요.
             </p>
           </div>
@@ -136,7 +136,7 @@ function WebOnboarding({ navigate }) {
 
       {/* Footer */}
       <div className="px-8 py-4 border-t border-zinc-800/60 text-center text-zinc-600 text-xs">
-        © 2025 NoJam. All rights reserved.
+        © 2025 Dayjee. All rights reserved.
       </div>
     </div>
   )

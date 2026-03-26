@@ -94,8 +94,8 @@ export default function TasksPage() {
       >
         {/* 앱 아이콘 + 이름 */}
         <div className="flex items-center gap-2.5 px-4 pt-3 pb-1">
-          <img src="/icons/icon.svg" alt="NoJam" className="w-7 h-7 rounded-lg" />
-          <span className="text-base font-semibold text-zinc-900 tracking-tight">NoJam</span>
+          <img src="/icons/icon.svg" alt="Dayjee" className="w-7 h-7 rounded-lg" />
+          <span className="text-base font-semibold text-zinc-900 tracking-tight">Dayjee</span>
         </div>
         {/* 일정 입력 */}
         <QuickAdd />

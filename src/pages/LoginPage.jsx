@@ -19,8 +19,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-4">
       {/* Logo */}
       <div className="flex items-center gap-2.5 mb-8">
-        <img src="/icons/icon.svg" alt="NoJam" className="w-8 h-8" />
-        <span className="text-white font-bold text-xl tracking-tight">NoJam</span>
+        <img src="/icons/icon.svg" alt="Dayjee" className="w-8 h-8" />
+        <span className="text-white font-bold text-xl tracking-tight">Dayjee</span>
       </div>
 
       {/* Card */}

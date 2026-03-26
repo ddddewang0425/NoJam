@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.svg', 'icons/*.png'],
       manifest: {
-        name: 'NoJam Task Monitor',
-        short_name: 'NoJam',
+        name: 'Dayjee Task Monitor',
+        short_name: 'Dayjee',
         description: '일정 관리 및 가계부 앱',
         theme_color: '#18181b',
         background_color: '#ffffff',

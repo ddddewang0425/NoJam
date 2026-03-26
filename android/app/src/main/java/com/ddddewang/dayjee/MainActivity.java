@@ -1,4 +1,4 @@
-package com.ddddewang.nojam;
+package com.ddddewang.dayjee;
 
 import com.getcapacitor.BridgeActivity;
 
