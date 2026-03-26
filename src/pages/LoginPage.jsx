@@ -19,8 +19,13 @@ export default function LoginPage() {
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-4">
       {/* Logo */}
       <div className="flex items-center gap-2.5 mb-8">
+<<<<<<< HEAD
         <img src="/icons/icon.svg" alt="Dayjee" className="w-8 h-8" />
         <span className="text-white font-bold text-xl tracking-tight">Dayjee</span>
+=======
+        <img src="/icons/icon.svg" alt="NoJam" className="w-8 h-8" />
+        <span className="text-white font-bold text-xl tracking-tight">NoJam</span>
+>>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
       </div>
 
       {/* Card */}

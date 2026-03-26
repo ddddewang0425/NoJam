@@ -2,7 +2,10 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import BottomNav from './BottomNav'
 import useTaskStore from '../store/taskStore'
+<<<<<<< HEAD
 import { Analytics } from "@vercel/analytics/react"
+=======
+>>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
 
 export default function Layout() {
   const location = useLocation()

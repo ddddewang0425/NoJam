@@ -28,7 +28,11 @@ export default function Sidebar() {
             <CheckSquare size={16} className="text-zinc-900" />
           </div>
           <div>
+<<<<<<< HEAD
             <h1 className="text-base font-bold tracking-tight leading-none">Dayjee</h1>
+=======
+            <h1 className="text-base font-bold tracking-tight leading-none">NoJam</h1>
+>>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
             <p className="text-[10px] text-zinc-400 mt-0.5">Task Monitor</p>
           </div>
         </div>
@@ -92,7 +96,11 @@ export default function Sidebar() {
           </button>
         </div>
 
+<<<<<<< HEAD
         <p className="text-[10px] text-zinc-500 px-3 pt-0.5">v0.1.0 · Dayjee</p>
+=======
+        <p className="text-[10px] text-zinc-500 px-3 pt-0.5">v0.1.0 · NoJam</p>
+>>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
       </div>
     </div>
   )

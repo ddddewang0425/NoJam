@@ -1,7 +1,16 @@
+<<<<<<< HEAD
 <?xml version='1.0' encoding='utf-8' ?>
 <resources>
     <string name="app_name">Dayjee</string>
     <string name="title_activity_main">Dayjee</string>
     <string name="package_name">com.ddddewang.dayjee</string>
     <string name="custom_url_scheme">com.ddddewang.dayjee</string>
+=======
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NoJam</string>
+    <string name="title_activity_main">NoJam</string>
+    <string name="package_name">com.ddddewang.nojam</string>
+    <string name="custom_url_scheme">com.ddddewang.nojam</string>
+>>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
 </resources>

@@ -1,10 +1,17 @@
 apply plugin: 'com.android.application'
 
 android {
+<<<<<<< HEAD
     namespace = "com.ddddewang.dayjee"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.ddddewang.dayjee"
+=======
+    namespace = "com.ddddewang.nojam"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.ddddewang.nojam"
+>>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
