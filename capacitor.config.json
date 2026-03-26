@@ -1,0 +1,8 @@
+{
+  "appId": "com.ddddewang.nojam",
+  "appName": "NoJam",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

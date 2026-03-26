@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, 'Noto Sans KR', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove default date/time input styling on iOS */
+input[type='date'],
+input[type='time'] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+/* Task list item animation */
+@keyframes taskSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* Page transition animation */
+@keyframes pageSlideIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+
+/* QuickAdd date scroller animations */
+@keyframes dateSlideFromBelow {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+@keyframes dateSlideFromAbove {
+  from { opacity: 0; transform: translateY(-7px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* Calendar month slide animations */
+@keyframes calSlideFromRight {
+  from { opacity: 0; transform: translateX(44px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+@keyframes calSlideFromLeft {
+  from { opacity: 0; transform: translateX(-44px); }
+  to   { opacity: 1; transform: translateX(0);     }
+}
