@@ -30,11 +30,7 @@ export default function TimetablePage() {
       >
         <div className="flex items-center justify-between px-4 pt-3 pb-3">
           <div className="flex items-center gap-2.5">
-<<<<<<< HEAD
             <img src="/icons/icon.svg" alt="Dayjee" className="w-7 h-7 rounded-lg" />
-=======
-            <img src="/icons/icon.svg" alt="NoJam" className="w-7 h-7 rounded-lg" />
->>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
             <span className="text-base font-semibold text-zinc-900 tracking-tight">시간표</span>
           </div>
           <button

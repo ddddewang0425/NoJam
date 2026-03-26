@@ -1,11 +1,6 @@
 {
-<<<<<<< HEAD
   "appId": "com.ddddewang.dayjee",
   "appName": "Dayjee",
-=======
-  "appId": "com.ddddewang.nojam",
-  "appName": "NoJam",
->>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

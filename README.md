@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # Dayjee — Task Monitor (PWA + Android)
-=======
-# NoJam — Task Monitor (PWA + Android)
->>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
 
 > 새 Claude 인스턴스용 온보딩 문서. 이 파일만 읽으면 바로 작업 가능.
 
@@ -170,11 +166,7 @@ CREATE TABLE public.day_notes (
 ### 앱 헤더 (모바일/앱 전용)
 
 - 최상단에 `env(safe-area-inset-top)` 패딩 → Android 상태바와 겹침 방지
-<<<<<<< HEAD
 - 아이콘(`/icons/icon.svg`) + "Dayjee" 텍스트
-=======
-- 아이콘(`/icons/icon.svg`) + "NoJam" 텍스트
->>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
 - QuickAdd 입력폼 바로 아래 배치
 
 ### QuickAdd (인라인 입력, 모달 없음)
@@ -275,13 +267,8 @@ npm run build && npx cap sync android
 
 ```json
 {
-<<<<<<< HEAD
   "appId": "com.ddddewang.dayjee",
   "appName": "Dayjee",
-=======
-  "appId": "com.ddddewang.nojam",
-  "appName": "NoJam",
->>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
   "webDir": "dist",
   "server": { "androidScheme": "https" }
 }

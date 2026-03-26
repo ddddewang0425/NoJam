@@ -2,11 +2,7 @@ import { create } from 'zustand'
 import bcrypt from 'bcryptjs'
 import { supabase } from '../supabase'
 
-<<<<<<< HEAD
 const SESSION_KEY = 'dayjee_user'
-=======
-const SESSION_KEY = 'nojam_user'
->>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
 
 const loadSession = () => {
   try {

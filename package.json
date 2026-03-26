@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
   "name": "dayjee",
-=======
-  "name": "nojam",
->>>>>>> 028f647cb6777152179d040aa2d7623776063f9d
   "private": true,
   "version": "0.1.0",
   "type": "module",
